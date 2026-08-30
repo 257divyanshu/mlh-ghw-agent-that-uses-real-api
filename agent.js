@@ -114,33 +114,22 @@ async function getCountryInfo(country) {
   // Convert the JSON response into a JavaScript object.
   const data = await response.json();
 
-  // The API may return either an array or an object.
-  //
-  // If it returns an array → take the first element.
-  // Otherwise → use the object directly.
-  const result = Array.isArray(data) ? data[0] : data;
+  const result = data;
 
-  // Make sure we actually received country data.
-  if (!result) {
-    return {
-      error: `No country data was returned for "${country}".`,
-    };
-  }
+  // Simplify the API response while preserving all returned countries.
+  return result.map((country) => ({
+    name: country.name,
+    capital: country.capital,
+    region: country.region,
+    subregion: country.subregion,
+    population: country.population,
+    currencies: country.currencies || [],
 
-  // Return a simplified version of the API response.
-  return {
-    name: result.name,
-    capital: result.capital,
-    region: result.region,
-    subregion: result.subregion,
-    population: result.population,
-    currencies: result.currencies || [],
-
-    // Extract only the language names from the language objects returned by the API.
-    languages: (result.languages || []).map(
+    // Extract only the language names from the language objects.
+    languages: (country.languages || []).map(
       (language) => language.name
     ),
-  };
+  }));
 }
 
 
@@ -193,6 +182,39 @@ async function convertCurrency(amount, from, to) {
     ),
 
     date: data.date,
+  };
+}
+
+// =====================================================
+// TOOL RESULT VALIDATORS
+// =====================================================
+
+function validateCountryResult(country, result) {
+  // No country data was returned.
+  if (!result) {
+    return {
+      valid: false,
+      type: "not_found",
+      error: `Could not find country information for "${country}".`,
+    };
+  }
+
+  // Normalize the response into an array.
+  const countries = Array.isArray(result) ? result : [result];
+
+  // Multiple countries were returned.
+  if (countries.length > 1) {
+    return {
+      valid: false,
+      type: "ambiguous",
+      options: countries.map((item) => item.name),
+    };
+  }
+
+  // Exactly one country was returned.
+  return {
+    valid: true,
+    result: countries[0],
   };
 }
 
@@ -295,32 +317,47 @@ const tools = [weatherTool, countryTool, currencyTool];
 // }
 //
 // This function takes that function call and executes the corresponding JavaScript function.
-async function executeTool(functionCall) {
-  switch (functionCall.name) {
-
-    // Gemini requested getWeather().
+async function executeTool(name, args) {
+  switch (name) {
     case "getWeather":
-      return await getWeather(functionCall.args.city);
+      return await getWeather(args.city);
 
+    case "getCountryInfo": {
+      const result = await getCountryInfo(args.country);
 
-    // Gemini requested getCountryInfo().
-    case "getCountryInfo":
-      return await getCountryInfo(functionCall.args.country);
-
-
-    // Gemini requested convertCurrency().
-    case "convertCurrency":
-      return await convertCurrency(
-        functionCall.args.amount,
-        functionCall.args.from,
-        functionCall.args.to
+      const validation = validateCountryResult(
+        args.country,
+        result
       );
 
+      if (!validation.valid) {
+        // If multiple countries were returned, give Gemini the list so it can ask the user which country they mean.
+        if (validation.type === "ambiguous") {
+          return {
+            error: `Multiple countries were found for "${args.country}".`,
+            options: validation.options,
+          };
+        }
 
-    // Handle an unknown tool name.
+        // Handle the "country not found" case.
+        return {
+          error: validation.error,
+        };
+      }
+
+      return validation.result;
+    }
+
+    case "convertCurrency":
+      return await convertCurrency(
+        args.amount,
+        args.from,
+        args.to
+      );
+
     default:
       return {
-        error: `Unknown tool: ${functionCall.name}`,
+        error: `Unknown tool: ${name}`,
       };
   }
 }
@@ -382,7 +419,7 @@ export async function runAgent(userQuestion) {
     // 2. Instructions describing its role
     // 3. The available tools
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-3.5-flash-lite",
 
       // Give Gemini everything that has happened so far.
       contents,
@@ -406,13 +443,15 @@ export async function runAgent(userQuestion) {
 
         3. Do NOT use your own general knowledge to replace, supplement, or fill in information that should come from a tool.
 
-        4. If a tool returns an error, invalid data, or information that does not correspond to the user's request, do NOT provide an answer based on your own knowledge. Clearly tell the user that the requested information could not be reliably retrieved.
+        4. If a tool returns an error without an "options" property, do NOT provide an answer based on your own knowledge. Clearly tell the user that the requested information could not be reliably retrieved.
 
         5. You may use your general knowledge only for information that is outside the scope of the available tools.
 
         6. When multiple pieces of information are requested, use all relevant tools and base each tool-related part of your answer on its corresponding tool result.
 
         7. Do not assume that a tool result is correct merely because the tool returned it. If the result appears inconsistent with the user's request, treat it as unreliable.
+
+        8. If the country information tool returns an object containing an "options" property, it means that multiple countries were found for the user's request. Do not choose a country on your own. Present the country names from the "options" property to the user and ask which country they want information about.
 
         Be concise, accurate, and transparent about the source of information.
         `,
@@ -482,7 +521,7 @@ export async function runAgent(userQuestion) {
       //
       // Gemini decides WHAT tool to use.
       // executeTool() performs the actual operation.
-      const result = await executeTool(functionCall);
+      const result = await executeTool(functionCall.name, functionCall.args);
 
 
       console.log("\n📡 Real API result:");
