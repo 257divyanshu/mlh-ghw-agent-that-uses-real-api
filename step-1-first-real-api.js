@@ -1,20 +1,16 @@
 // STEP 1:
-// Calling a real API directly from Node.js.
-// No Gemini. No AI. Just our application talking to an external API.
+// Call a real external API directly from Node.js.
+// No Gemini or AI is involved at this stage.
 
-// Coordinates of Lagos, Nigeria.
-// The weather API needs latitude and longitude to know the location.
+
+// Coordinates used to request weather data for Lagos, Nigeria.
 const latitude = 6.5244;
 const longitude = 3.3792;
 
-// Build the URL for the Open-Meteo weather API.
+
+// Build the Open-Meteo API request.
 //
-// We are asking for:
-// - current temperature
-// - apparent temperature ("feels like")
-// - weather code
-// - wind speed
-// - automatic timezone
+// The request includes current temperature, apparent temperature, weather code, wind speed, and the location's automatic timezone.
 const url =
   `https://api.open-meteo.com/v1/forecast` +
   `?latitude=${latitude}` +
@@ -22,35 +18,37 @@ const url =
   `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m` +
   `&timezone=auto`;
 
-console.log("🌍 Calling the Open-Meteo Weather API...\n");
+
+console.log("🌍 Calling the Open-Meteo Weather API...");
+
 
 try {
-  // Send an HTTP GET request to the weather API.
-  // fetch() returns a Promise containing the HTTP response.
+
+  // Send the HTTP request and verify that it succeeded.
   const response = await fetch(url);
 
-  // response.ok is true when the HTTP request succeeded.
-  // If something went wrong, throw an error so execution moves to the catch block.
   if (!response.ok) {
     throw new Error(
       `API request failed: ${response.status} ${response.statusText}`
     );
   }
 
-  // The API sends its response as JSON.
-  // response.json() parses that JSON into a JavaScript object.
+
+  // Parse the JSON response returned by the API.
   const data = await response.json();
 
-  // Print the complete response received from the API.
+
+  // Display the raw API response to inspect its structure.
+  console.log("\n-----------------------------------\n");
   console.log("📦 Raw API response:\n");
   console.log(data);
+
 
   console.log("\n-----------------------------------\n");
   console.log("🌤️ Current Weather in Lagos\n");
 
-  // Access the weather information inside the API response.
-  // data.current contains the current weather values.
-  // data.current_units contains the corresponding units.
+
+  // Extract the requested weather values from the API response.
   console.log(
     `Temperature: ${data.current.temperature_2m}${data.current_units.temperature_2m}`
   );
@@ -66,7 +64,8 @@ try {
   console.log(`Weather code: ${data.current.weather_code}`);
 
 } catch (error) {
-  // If either fetch() or any of the processing above fails, execution comes here.
+
+  // Handle API or response-processing errors.
   console.error("❌ Something went wrong:");
   console.error(error.message);
 }

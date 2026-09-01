@@ -1,5 +1,5 @@
 // STEP 2:
-// Turn our API request into a reusable JavaScript tool.
+// Turn the API request into a reusable JavaScript tool.
 //
 // City name
 //    ↓
@@ -12,19 +12,15 @@
 // Real weather data
 
 
-// This function acts as our reusable "weather tool".
-// Instead of hardcoding a location, we can pass any city name.
+// Resolve a city name and return its current weather data.
 async function getWeather(city) {
   console.log(`\n🔍 Finding "${city}"...`);
 
   // -----------------------------------
-  // 1. Convert city name to coordinates
+  // 1. Resolve city coordinates
   // -----------------------------------
 
-  // The weather API needs latitude and longitude, but the user gives us a city name.
-  //
-  // So we first call the Geocoding API to convert:
-  // "New York" → latitude + longitude
+  // Convert the city name into latitude and longitude.
   const geocodingUrl =
     `https://geocoding-api.open-meteo.com/v1/search` +
     `?name=${encodeURIComponent(city)}` +
@@ -32,27 +28,20 @@ async function getWeather(city) {
     `&language=en` +
     `&format=json`;
 
-  // Make the API request.
   const locationResponse = await fetch(geocodingUrl);
 
-  // Check whether the HTTP request was successful.
   if (!locationResponse.ok) {
     throw new Error("Could not reach the geocoding API.");
   }
 
-  // Convert the API's JSON response into a JavaScript object.
   const locationData = await locationResponse.json();
 
-  // Make sure we actually found the city.
-  //
-  // ?. is optional chaining:
-  // if "results" doesn't exist, this safely evaluates instead of throwing an error.
+  // The geocoding API may return no matching locations.
   if (!locationData.results?.length) {
     throw new Error(`Could not find a location called "${city}".`);
   }
 
-  // The API can return multiple matching locations.
-  // Since we requested count=1, the first result is the location we want.
+  // Use the first match because the request asks for one result.
   const location = locationData.results[0];
 
   console.log(
@@ -63,11 +52,11 @@ async function getWeather(city) {
     `   Coordinates: ${location.latitude}, ${location.longitude}`
   );
 
+
   // -----------------------------------
   // 2. Get weather using coordinates
   // -----------------------------------
 
-  // Now that we have latitude and longitude, we can construct the actual Weather API URL.
   const weatherUrl =
     `https://api.open-meteo.com/v1/forecast` +
     `?latitude=${location.latitude}` +
@@ -77,28 +66,20 @@ async function getWeather(city) {
 
   console.log("\n🌍 Calling the real Weather API...");
 
-  // Make the request to the Weather API.
   const weatherResponse = await fetch(weatherUrl);
 
-  // Make sure the Weather API request succeeded.
   if (!weatherResponse.ok) {
     throw new Error("Could not reach the weather API.");
   }
 
-  // Parse the Weather API's JSON response.
   const weatherData = await weatherResponse.json();
+
 
   // -----------------------------------
   // 3. Return clean data
   // -----------------------------------
 
-  // Instead of returning the entire API response, we extract only the information our application needs.
-  //
-  // This makes getWeather() a clean, reusable tool:
-  //
-  // getWeather("New York")
-  //        ↓
-  // { city, country, temperature, feelsLike, ... }
+  // Return only the fields needed by the application instead of exposing the complete API responses.
   return {
     city: location.name,
     country: location.country,
@@ -115,23 +96,24 @@ async function getWeather(city) {
   };
 }
 
+
 // -----------------------------------
 // TEST OUR TOOL
 // -----------------------------------
 
 try {
-  // Call our newly created reusable weather tool.
-  // We simply provide the city name.
-//   const weather = await getWeather("New York");
-//   const weather = await getWeather("Vrindavan");
+
+  // Test the reusable weather tool with a city name.
+  // const weather = await getWeather("New York");
+  // const weather = await getWeather("Vrindavan");
   const weather = await getWeather("Mayapur");
 
   console.log("\n✅ Real weather data:\n");
-
-  // Display the clean object returned by getWeather().
   console.log(weather);
+
 } catch (error) {
-  // Handle any error that occurred while calling the tool.
+
+  // Handle errors from either API or tool execution.
   console.error("\n❌ Something went wrong:");
   console.error(error.message);
 }
