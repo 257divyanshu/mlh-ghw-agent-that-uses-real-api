@@ -71,6 +71,35 @@ app.post("/api/agent", async (req, res) => {
   }
 });
 
+// Temporary diagnostic endpoint to verify Render's connectivity to the Open-Meteo Geocoding API.
+app.get("/api/test-geocoding", async (req, res) => {
+  try {
+    const url =
+      "https://geocoding-api.open-meteo.com/v1/search" +
+      "?name=Berlin" +
+      "&count=1" +
+      "&language=en" +
+      "&format=json";
+
+    const response = await fetch(url);
+
+    const data = await response.json();
+
+    res.json({
+      ok: response.ok,
+      status: response.status,
+      data,
+    });
+  } catch (error) {
+    console.error("Geocoding test failed:", error);
+
+    res.status(500).json({
+      error: error.message,
+      cause: error.cause?.message,
+    });
+  }
+});
+
 
 // =====================================================
 // START SERVER
