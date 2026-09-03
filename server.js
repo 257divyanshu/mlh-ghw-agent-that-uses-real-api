@@ -1,3 +1,6 @@
+import dns from "node:dns";
+dns.setDefaultResultOrder("ipv4first");
+
 import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,6 +15,7 @@ import { runAgent } from "./agent.js";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+console.log("Node version:", process.version); // TEMP: remove after checking Render's Node version
 
 // =====================================================
 // MIDDLEWARE

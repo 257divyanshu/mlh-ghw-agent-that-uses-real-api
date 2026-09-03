@@ -15,6 +15,9 @@
   "author": "",
   "license": "ISC",
   "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
   "bugs": {
     "url": "https://github.com/257divyanshu/mlh-ghw-agent-that-uses-real-api/issues"
   },
