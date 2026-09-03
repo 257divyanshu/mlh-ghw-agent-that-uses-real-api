@@ -98,7 +98,7 @@ app.get("/api/test-geocoding", async (req, res) => {
     res.status(500).json({
       city,
       error: error.message,
-      cause: error.cause?.message,
+      cause: error.cause,
     });
   }
 });
