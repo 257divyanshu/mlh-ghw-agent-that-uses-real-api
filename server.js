@@ -71,21 +71,23 @@ app.post("/api/agent", async (req, res) => {
   }
 });
 
-// Temporary diagnostic endpoint to verify Render's connectivity to the Open-Meteo Geocoding API.
+// Temporary diagnostic endpoint for testing Open-Meteo Geocoding API connectivity.
 app.get("/api/test-geocoding", async (req, res) => {
+  const city = req.query.city || "Berlin";
+
   try {
     const url =
       "https://geocoding-api.open-meteo.com/v1/search" +
-      "?name=Berlin" +
+      `?name=${encodeURIComponent(city)}` +
       "&count=1" +
       "&language=en" +
       "&format=json";
 
     const response = await fetch(url);
-
     const data = await response.json();
 
     res.json({
+      city,
       ok: response.ok,
       status: response.status,
       data,
@@ -94,6 +96,7 @@ app.get("/api/test-geocoding", async (req, res) => {
     console.error("Geocoding test failed:", error);
 
     res.status(500).json({
+      city,
       error: error.message,
       cause: error.cause?.message,
     });
