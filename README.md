@@ -169,34 +169,53 @@ These tests cover **ambiguous results, multiple results, single results, and not
 ```text
 mlh-ghw-agent-that-uses-real-api/
 │
+├── public/
+│   ├── app.js
+│   ├── index.html
+│   └── style.css
+│
+├── src/
+│   ├── agent/
+│   │   ├── instructions.js
+│   │   ├── toolExecutor.js
+│   │   └── tools.js
+│   │
+│   ├── config/
+│   │   └── gemini.js
+│   │
+│   ├── tools/
+│   │   ├── country.js
+│   │   ├── currency.js
+│   │   └── weather.js
+│   │
+│   └── validation/
+│       └── country.js
+│
+├── agent.js
+├── server.js
 ├── step-1-first-real-api.js
 ├── step-2-api-as-a-tool.js
 ├── step-3-real-api-agent.js
 ├── step-4-smart-travel-agent.js
-│
-├── agent.js
-├── server.js
-│
-├── public/
-│   ├── index.html
-│   ├── app.js
-│   └── style.css
-│
 ├── .env.example
 ├── package.json
 ├── package-lock.json
 └── README.md
 ```
 
-| File                           | Purpose                                   |
-| ------------------------------ | ----------------------------------------- |
-| `step-1-first-real-api.js`     | Direct weather API request                |
-| `step-2-api-as-a-tool.js`      | Reusable `getWeather()` tool              |
-| `step-3-real-api-agent.js`     | Gemini + weather tool                     |
-| `step-4-smart-travel-agent.js` | Multi-tool Smart Travel Agent             |
-| `agent.js`                     | Agent logic, tools, execution, validation |
-| `server.js`                    | Express server                            |
-| `public/`                      | Web interface                             |
+### Important Files
+
+| File / Directory  | Purpose                                              |
+| ----------------- | ---------------------------------------------------- |
+| `agent.js`        | Core agent loop and Gemini interaction               |
+| `server.js`       | Express server and API endpoint                      |
+| `src/agent/`      | Agent instructions, tool declarations, and execution |
+| `src/config/`     | Gemini client configuration                          |
+| `src/tools/`      | Real API integrations                                |
+| `src/validation/` | Tool-result validation                               |
+| `public/`         | Web interface                                        |
+| `step-*.js`       | Original project progression                         |
+| `.env.example`    | Environment variable template                        |
 
 ---
 
