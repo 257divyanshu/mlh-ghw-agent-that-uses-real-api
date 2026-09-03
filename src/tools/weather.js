@@ -1,8 +1,7 @@
 export async function getWeather(city) {
   console.log(`\n🌦️ Getting real weather for ${city}...`);
 
-  // The weather API requires latitude and longitude.
-  // So first convert the city name into coordinates.
+  // The weather API requires latitude and longitude. So first convert the city name into coordinates.
   const geocodingUrl =
     `https://geocoding-api.open-meteo.com/v1/search` +
     `?name=${encodeURIComponent(city)}` +
@@ -29,17 +28,22 @@ export async function getWeather(city) {
 
   // Use the coordinates to build the weather API URL.
   const weatherUrl =
-    `https://api.open-meteo.com/v1/forecast` +
-    `?latitude=${location.latitude}` +
-    `&longitude=${location.longitude}` +
-    `&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m` +
-    `&timezone=auto`;
+    `https://api.openweathermap.org/data/2.5/weather` +
+    `?lat=${location.latitude}` +
+    `&lon=${location.longitude}` +
+    `&appid=${process.env.OPENWEATHER_API_KEY}` +
+    `&units=metric`;
 
   const weatherResponse = await fetch(weatherUrl);
 
   if (!weatherResponse.ok) {
     const errorBody = await weatherResponse.text();
     console.error("Weather API failed:", weatherResponse.status, errorBody);
+
+    if (weatherResponse.status === 429) {
+      return { error: "Weather service rate limit reached. Please try again later." };
+    }
+
     throw new Error("Could not reach the weather API.");
   }
 
@@ -49,13 +53,14 @@ export async function getWeather(city) {
   return {
     city: location.name,
     country: location.country,
-    temperature: weatherData.current.temperature_2m,
-    feelsLike: weatherData.current.apparent_temperature,
-    windSpeed: weatherData.current.wind_speed_10m,
-    weatherCode: weatherData.current.weather_code,
+    temperature: weatherData.main.temp,
+    feelsLike: weatherData.main.feels_like,
+    windSpeed: weatherData.wind.speed,
+    weatherDescription: weatherData.weather[0].description,
+    humidity: weatherData.main.humidity,
     units: {
-      temperature: weatherData.current_units.temperature_2m,
-      windSpeed: weatherData.current_units.wind_speed_10m,
+      temperature: "°C",
+      windSpeed: "m/s",
     },
   };
 }
