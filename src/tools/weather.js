@@ -38,6 +38,8 @@ export async function getWeather(city) {
   const weatherResponse = await fetch(weatherUrl);
 
   if (!weatherResponse.ok) {
+    const errorBody = await weatherResponse.text();
+    console.error("Weather API failed:", weatherResponse.status, errorBody);
     throw new Error("Could not reach the weather API.");
   }
 
