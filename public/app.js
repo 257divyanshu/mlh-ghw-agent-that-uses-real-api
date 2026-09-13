@@ -1,7 +1,9 @@
 // References to the chat interface elements.
-const form = document.getElementById("chat-form");
+const form = document.querySelector(".composer");
 const input = document.getElementById("message");
 const messages = document.getElementById("messages");
+const sendBtn = document.getElementById("send-btn");
+const suggestions = document.querySelectorAll(".suggestion");
 
 
 // =====================================================
@@ -11,47 +13,124 @@ const messages = document.getElementById("messages");
 // Add a user or assistant message to the chat interface.
 function addMessage(text, role) {
 
-  const div = document.createElement("div");
+  const isUser = role === "user";
 
-  div.className = `message ${role}`;
-  div.textContent = text;
+  const div = document.createElement("div");
+  div.className = `message ${isUser ? "message-user" : "message-assistant"}`;
+
+  // Avatar
+  const avatar = document.createElement("div");
+  avatar.className = "message-avatar";
+  avatar.textContent = isUser ? "You" : "AI";
+
+  // Bubble
+  const content = document.createElement("div");
+  content.className = "message-content";
+
+  const author = document.createElement("p");
+  author.className = "message-author";
+  author.textContent = isUser ? "You" : "Agent";
+
+  const text_p = document.createElement("p");
+  text_p.textContent = text;
+
+  content.appendChild(author);
+  content.appendChild(text_p);
+
+  div.appendChild(avatar);
+  div.appendChild(content);
 
   messages.appendChild(div);
 
   // Keep the latest message visible.
   messages.scrollTop = messages.scrollHeight;
+
+  return div;
 }
 
 
 // =====================================================
-// HANDLE FORM SUBMISSION
+// THINKING INDICATOR
 // =====================================================
 
-form.addEventListener("submit", async (event) => {
+// Show an animated thinking indicator while the agent is processing.
+function showThinking() {
 
-  // Prevent the page from reloading on form submission.
-  event.preventDefault();
+  const div = document.createElement("div");
+  div.className = "message message-assistant";
+  div.id = "thinking-indicator";
+
+  const avatar = document.createElement("div");
+  avatar.className = "message-avatar";
+  avatar.textContent = "AI";
+
+  const content = document.createElement("div");
+  content.className = "message-content";
+
+  const author = document.createElement("p");
+  author.className = "message-author";
+  author.textContent = "Agent";
+
+  const thinkingRow = document.createElement("div");
+  thinkingRow.className = "thinking-row";
+
+  const dots = document.createElement("div");
+  dots.className = "thinking-dots";
+  dots.innerHTML = "<span></span><span></span><span></span>";
+
+  thinkingRow.appendChild(dots);
+  content.appendChild(author);
+  content.appendChild(thinkingRow);
+
+  div.appendChild(avatar);
+  div.appendChild(content);
+
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+// Remove the thinking indicator once the agent responds.
+function hideThinking() {
+  const indicator = document.getElementById("thinking-indicator");
+  if (indicator) {
+    indicator.remove();
+  }
+}
 
 
-  const message = input.value.trim();
+// =====================================================
+// DISABLE / ENABLE UI
+// =====================================================
+
+function setUIDisabled(disabled) {
+  input.disabled = disabled;
+  sendBtn.disabled = disabled;
+  suggestions.forEach((btn) => (btn.disabled = disabled));
+}
+
+
+// =====================================================
+// SEND MESSAGE
+// =====================================================
+
+async function sendMessage(message) {
+
+  const text = message || input.value.trim();
 
   // Ignore empty messages.
-  if (!message) {
-    return;
-  }
-
+  if (!text) return;
 
   // Display the user's message immediately.
-  addMessage(message, "user");
+  addMessage(text, "user");
 
   input.value = "";
-
+  input.style.height = "auto";
 
   // Prevent multiple requests while the agent is processing.
-  input.disabled = true;
+  setUIDisabled(true);
 
-  const button = form.querySelector("button");
-  button.disabled = true;
+  // Show thinking indicator while waiting for the agent.
+  showThinking();
 
 
   try {
@@ -78,7 +157,7 @@ form.addEventListener("submit", async (event) => {
       },
 
       body: JSON.stringify({
-        message,
+        message: text,
       }),
     });
 
@@ -93,23 +172,62 @@ form.addEventListener("submit", async (event) => {
       );
     }
 
+    // Remove thinking indicator before showing the real response.
+    hideThinking();
 
     // Display the agent's response.
     addMessage(data.answer, "assistant");
 
   } catch (error) {
 
+    // Remove thinking indicator on error too.
+    hideThinking();
+
     // Display request or server errors in the chat.
-    addMessage(
+    const errorDiv = addMessage(
       `Error: ${error.message}`,
       "assistant"
     );
+    errorDiv.classList.add("message-error");
 
   } finally {
 
     // Restore the interface after the request completes.
-    input.disabled = false;
-    button.disabled = false;
+    setUIDisabled(false);
     input.focus();
   }
+}
+
+
+// =====================================================
+// HANDLE FORM SUBMISSION
+// =====================================================
+
+sendBtn.addEventListener("click", () => sendMessage());
+
+// Send on Enter, new line on Shift+Enter.
+input.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
+});
+
+// Auto-resize textarea as user types.
+input.addEventListener("input", () => {
+  input.style.height = "auto";
+  input.style.height = input.scrollHeight + "px";
+});
+
+
+// =====================================================
+// SUGGESTION CHIPS
+// =====================================================
+
+// Fill the input with the suggestion text and send it on click.
+suggestions.forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const prompt = btn.dataset.prompt;
+    sendMessage(prompt);
+  });
 });

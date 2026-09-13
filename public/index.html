@@ -11,37 +11,67 @@
 
 <body>
 
-  <main class="container">
+  <div class="page-glow page-glow-left"></div>
+  <div class="page-glow page-glow-right"></div>
 
-    <header>
+  <div class="app-shell">
 
-      <h1>✈️ Smart Travel Agent</h1>
+    <header class="app-header">
 
-      <p>
-        Gemini + Real APIs + Agent Loop
-      </p>
+      <div class="brand-mark">✈️</div>
+
+      <div>
+        <p class="eyebrow">AI Travel Assistant</p>
+        <h1>Smart Travel Agent</h1>
+        <p class="subtitle">Gemini + Real APIs + Agent Loop</p>
+      </div>
 
     </header>
 
-    <div id="messages" class="messages"></div>
 
+    <div class="chat-card">
 
-    <form id="chat-form">
+      <div id="messages" class="conversation"></div>
 
-      <input
-        id="message"
-        type="text"
-        placeholder="Ask me about travel..."
-        autocomplete="off"
-      />
+      <div class="composer-panel">
 
-      <button type="submit">
-        Send
-      </button>
+        <p class="suggestions-label">Try asking</p>
 
-    </form>
+        <div class="suggestion-list">
+          <button class="suggestion" data-prompt="What's the weather in London?">🌧️ Weather in London</button>
+          <button class="suggestion" data-prompt="Tell me about Japan.">🌍 Tell me about Japan</button>
+          <button class="suggestion" data-prompt="Convert 100 USD to INR.">💱 100 USD to INR</button>
+        </div>
 
-  </main>
+        <div class="composer">
+
+          <span class="visually-hidden">
+            <label for="message">Your message</label>
+          </span>
+
+          <textarea
+            id="message"
+            placeholder="Ask me about travel..."
+            autocomplete="off"
+            rows="1"
+          ></textarea>
+
+          <button id="send-btn" class="submit-button">
+            <span class="button-label">Send</span>
+            <span class="button-arrow">↑</span>
+          </button>
+
+        </div>
+
+        <p class="keyboard-hint">Press <kbd>Enter</kbd> to send · <kbd>Shift+Enter</kbd> for new line</p>
+
+      </div>
+
+    </div>
+
+    <footer>Smart Travel Agent · Powered by Gemini</footer>
+
+  </div>
 
   <script src="/app.js"></script>
 
