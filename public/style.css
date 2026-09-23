@@ -125,7 +125,7 @@ h1 {
 }
 
 .chat-card {
-  height: clamp(35rem, calc(100dvh - 12.75rem), 47rem);
+  max-height: clamp(35rem, calc(100dvh - 12.75rem), 47rem);
   min-height: 0;
   display: flex;
   flex: 1;
@@ -139,7 +139,7 @@ h1 {
 }
 
 .conversation {
-  min-height: 12rem;
+  min-height: 0;
   padding: clamp(1rem, 3vw, 1.75rem);
   display: flex;
   flex: 1;
